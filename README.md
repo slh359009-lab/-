@@ -4,12 +4,12 @@
 
 ## 下载与启动
 
-1. 打开 [修正版 ZIP](downloads/photoshop-windows-bridge-v3.zip)，点击文件页面右侧的下载按钮；也可以在此分支选择 **Code → Download ZIP**。
-2. 如果 Windows 给 ZIP 添加了锁定标记，检查来源和脚本后，在文件“属性”中选择“解除锁定”，再解压。
+1. 打开 [修正版 ZIP](downloads/photoshop-windows-bridge-v4.zip)，点击文件页面右侧的下载按钮；也可以在此分支选择 **Code → Download ZIP**。
+2. 解压 ZIP 到新文件夹，启动器会先核对 Bridge.ps1 与 JSX 的 SHA-256，再仅解除 Bridge.ps1 的下载来源标记；不更改全局执行策略。
 3. 以普通用户权限打开 **Windows x64 Photoshop 2023**，关闭弹出的对话框。
 4. 在 ZIP 内的 `PhotoshopBridge` 文件夹双击 **Run.cmd**；连接器与 PS 应由同一 Windows 用户以普通权限运行。
 5. 首次运行会下载并校验 Cloudflare 官方的 `cloudflared`。保持窗口打开，等待显示 **PS_BRIDGE_URL**。
-6. **只把 HTTPS 地址发给 Codex，访问口令不要发到聊天中。** Codex 为确切域名声明密钥要求后，再把口令填入云环境设置的安全输入框。
+6. **只把 HTTPS 地址发给 Codex。口令默认隐藏。** Codex 配置确切域名的密钥要求后，在连接器窗口按字母 **C**（不是 Ctrl+C）复制口令，直接粘贴到云环境设置的安全密钥输入框；不要粘贴到聊天。
 
 GitHub 源码目录 `windows/` 也提供 `Run.cmd`、`Bridge.ps1` 和 `photoshop-task.jsx`；它们必须保持在同一文件夹。另提供内联 JSX 的 `Bridge-Single.ps1`，可作为独立脚本使用。
 
@@ -31,7 +31,7 @@ GitHub 源码目录 `windows/` 也提供 `Run.cmd`、`Bridge.ps1` 和 `photoshop
 
 ## 隧道和排障
 
-需要访问 GitHub 官方下载以及 Cloudflare 隧道服务，后者可能使用 TCP 7844。临时隧道不需要 Cloudflare 账户；地址和口令每次启动后变化，需要更新云端绑定。固定地址需要另行配置用户自己的稳定隧道。
+需要访问 GitHub 官方下载以及 Cloudflare 隧道服务，后者可能使用 TCP 7844。临时隧道不需要 Cloudflare 账户；重启后地址和口令变化。运行时按字母 **R** 可以只更换口令，网址保持不变；更换后旧口令立即失效，需要重新按 C 复制并更新安全绑定。固定地址需要另行配置用户自己的稳定隧道。
 
 关闭窗口或 Ctrl+C 断开。隧道日志在连接器的 `bin/tunnel-*.log` 中，不要将包含口令的窗口截图发到聊天。
 
@@ -52,3 +52,9 @@ ZIP 的 SHA-256 见 [SHA256SUMS](SHA256SUMS)。连接器使用 Cloudflare 官方
 ## v3 日志读取修复
 
 修复 Windows 上 cloudflared 正在写日志时，`ReadAllText` 因文件共享模式冲突而失败的问题。改为支持共享读取的 `Get-Content -Raw`。保留哈希、TLS 与脚本执行策略校验。新增 3 项共享日志读取检查（Linux PowerShell）：写入句柄保持打开时可读、可观察追加内容、读取句柄释放；13 项 HTTP 检查继续通过。真实 Windows 隧道恢复仍需用户启动验证。
+
+## v4 口令交付与启动
+
+控制台不再输出原始口令，复制整段日志不会带出口令。按 C 时才把当前口令放入 Windows 剪贴板，仅用于安全设置；按 R 在同一网址上更换口令。停止与重新启动仍使用 Ctrl+C；不要把复制口令与停止操作混淆。
+
+Run.cmd 会校验 Bridge.ps1 和 JSX 的固定哈希，只有一致时才解除 Bridge.ps1 的下载标记并以 STA、RemoteSigned 启动；不会修改系统或用户全局执行策略。旧版程序缺少这些交付改进，建议改用 v4。当前仍未完成真实云端到 PS 的端到端验证。

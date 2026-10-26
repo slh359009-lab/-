@@ -83,11 +83,23 @@ $ExportDirectory = [IO.Path]::GetFullPath($ExportDirectory)
 [IO.Directory]::CreateDirectory($ExportDirectory) | Out-Null
 
 # The token lives only in process memory. Never write it to a log or script.
-$tokenBytes = New-Object byte[] 32
-$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
-$rng.GetBytes($tokenBytes)
-$rng.Dispose()
-$script:SessionToken = ([BitConverter]::ToString($tokenBytes)).Replace('-', '').ToLowerInvariant()
+function New-SessionToken {
+    $bytes = New-Object byte[] 32
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+    return ([BitConverter]::ToString($bytes)).Replace('-', '').ToLowerInvariant()
+}
+$script:SessionToken = New-SessionToken
+
+function Invoke-ConsoleKey([ConsoleKey]$Key) {
+    if ($Key -eq [ConsoleKey]::C) {
+        Set-Clipboard -Value $script:SessionToken -ErrorAction Stop
+        Write-Host 'Token copied. Paste ONLY into the secure environment secret field.' -ForegroundColor Yellow
+    } elseif ($Key -eq [ConsoleKey]::R) {
+        $script:SessionToken = New-SessionToken
+        Write-Host 'Token changed. URL unchanged. Press C to copy the new token.' -ForegroundColor Yellow
+    }
+}
 if ($NoTunnel -and $env:PS_BRIDGE_TEST_TOKEN) {
     # Explicit loopback-only integration testing; not used by Run.cmd.
     $script:SessionToken = $env:PS_BRIDGE_TEST_TOKEN
@@ -269,13 +281,18 @@ try {
         }
         if (-not $url) { throw "Tunnel address unavailable. Inspect $log" }
         Write-Host "`nPS_BRIDGE_URL: $url" -ForegroundColor Cyan
-        Write-Host 'Enter the following token ONLY in the secure cloud environment secret settings:' -ForegroundColor Yellow
-        Write-Host $script:SessionToken -ForegroundColor Yellow
-        Write-Host 'Send the URL to Codex. Do not send the token in chat.'
+        Write-Host 'Token is hidden. Send ONLY the URL to Codex.'
+        Write-Host 'When filling secure settings: press C (without Ctrl) to copy the token.' -ForegroundColor Yellow
+        Write-Host 'Press R (without Ctrl) to change the token without changing the URL.'
     }
     Write-Host "Ready. Export directory: $ExportDirectory"
     Write-Host 'Keep this window open. Close it or press Ctrl+C to disconnect.'
     while ($true) {
+        if (-not $NoTunnel -and [Console]::KeyAvailable) {
+            $key = [Console]::ReadKey($true)
+            try { Invoke-ConsoleKey $key.Key }
+            catch { Write-Host 'Clipboard unavailable. Try C again from an interactive Windows session.' -ForegroundColor Yellow }
+        }
         if ($tunnel -and $tunnel.HasExited) { throw 'Tunnel stopped. Restart Run.cmd to reconnect.' }
         if (-not $listener.Pending()) { Start-Sleep -Milliseconds 100; continue }
         $client = $listener.AcceptTcpClient()
