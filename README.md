@@ -4,7 +4,7 @@
 
 ## 下载与启动
 
-1. 打开 [修正版 ZIP](downloads/photoshop-windows-bridge-v2.zip)，点击文件页面右侧的下载按钮；也可以在此分支选择 **Code → Download ZIP**。
+1. 打开 [修正版 ZIP](downloads/photoshop-windows-bridge-v3.zip)，点击文件页面右侧的下载按钮；也可以在此分支选择 **Code → Download ZIP**。
 2. 如果 Windows 给 ZIP 添加了锁定标记，检查来源和脚本后，在文件“属性”中选择“解除锁定”，再解压。
 3. 以普通用户权限打开 **Windows x64 Photoshop 2023**，关闭弹出的对话框。
 4. 在 ZIP 内的 `PhotoshopBridge` 文件夹双击 **Run.cmd**；连接器与 PS 应由同一 Windows 用户以普通权限运行。
@@ -48,3 +48,7 @@ ZIP 的 SHA-256 见 [SHA256SUMS](SHA256SUMS)。连接器使用 Cloudflare 官方
 ```
 
 云端控制客户端已保留在配套云环境 `/workspace/ecommerce-studio/photoshop/cloud/ps_client.py`。云端需要 `PS_BRIDGE_URL` 和安全绑定的 `PS_BRIDGE_TOKEN`；本仓库不包含它们的值。
+
+## v3 日志读取修复
+
+修复 Windows 上 cloudflared 正在写日志时，`ReadAllText` 因文件共享模式冲突而失败的问题。改为支持共享读取的 `Get-Content -Raw`。保留哈希、TLS 与脚本执行策略校验。新增 3 项共享日志读取检查（Linux PowerShell）：写入句柄保持打开时可读、可观察追加内容、读取句柄释放；13 项 HTTP 检查继续通过。真实 Windows 隧道恢复仍需用户启动验证。

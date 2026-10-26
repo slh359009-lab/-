@@ -262,7 +262,7 @@ try {
         for ($i=0; $i -lt 90; $i++) {
             if ($tunnel.HasExited) { throw "Tunnel exited. Inspect $log" }
             if (Test-Path -LiteralPath $log) {
-                $text = [IO.File]::ReadAllText($log)
+                $text = (Get-Content -LiteralPath $log -Raw -ErrorAction Stop)
                 if ($text -match 'https://[a-z0-9-]+\.trycloudflare\.com') { $url = $Matches[0]; break }
             }
             Start-Sleep -Milliseconds 500
