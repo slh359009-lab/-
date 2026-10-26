@@ -4,7 +4,7 @@
 
 ## 下载与启动
 
-1. 打开 [修正版 ZIP](downloads/photoshop-windows-bridge-v4.zip)，点击文件页面右侧的下载按钮；也可以在此分支选择 **Code → Download ZIP**。
+1. 打开 [修正版 ZIP](downloads/photoshop-windows-bridge-v5.zip)，点击文件页面右侧的下载按钮；也可以在此分支选择 **Code → Download ZIP**。
 2. 解压 ZIP 到新文件夹，启动器会先核对 Bridge.ps1 与 JSX 的 SHA-256，再仅解除 Bridge.ps1 的下载来源标记；不更改全局执行策略。
 3. 以普通用户权限打开 **Windows x64 Photoshop 2023**，关闭弹出的对话框。
 4. 在 ZIP 内的 `PhotoshopBridge` 文件夹双击 **Run.cmd**；连接器与 PS 应由同一 Windows 用户以普通权限运行。
@@ -57,4 +57,8 @@ ZIP 的 SHA-256 见 [SHA256SUMS](SHA256SUMS)。连接器使用 Cloudflare 官方
 
 控制台不再输出原始口令，复制整段日志不会带出口令。按 C 时才把当前口令放入 Windows 剪贴板，仅用于安全设置；按 R 在同一网址上更换口令。停止与重新启动仍使用 Ctrl+C；不要把复制口令与停止操作混淆。
 
-Run.cmd 会校验 Bridge.ps1 和 JSX 的固定哈希，只有一致时才解除 Bridge.ps1 的下载标记并以 STA、RemoteSigned 启动；不会修改系统或用户全局执行策略。旧版程序缺少这些交付改进，建议改用 v4。当前仍未完成真实云端到 PS 的端到端验证。
+Run.cmd 会校验 Bridge.ps1 和 JSX 的固定哈希，只有一致时才解除 Bridge.ps1 的下载标记并以 STA、RemoteSigned 启动；不会修改系统或用户全局执行策略。旧版程序缺少这些交付改进，建议改用 v5。当前仍未完成真实云端到 PS 的端到端验证。
+
+## v5 自动选择空闲端口
+
+本机监听器现在默认请求系统分配未使用端口，保持监听句柄，并把实际端口交给隧道；不会固定占用18765，也不需要结束其他进程。两个真实 PowerShell 连接器同时启动时获得不同端口并可接收请求，3项检查通过。原有HTTP检查继续通过。按C复制与按R更换隐藏口令的功能保持有效；完整Windows HTTPS通道仍需实机验证。

@@ -1,5 +1,5 @@
 param(
-    [ValidateRange(1024,65535)][int]$Port = 18765,
+    [ValidateRange(0,65535)][int]$Port = 0,
     [string]$ExportDirectory = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'ECommerceStudio\exports'),
     [switch]$NoTunnel
 )
@@ -247,6 +247,8 @@ $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $Port)
 $tunnel = $null
 try {
     $listener.Start()
+    $Port = ([Net.IPEndPoint]$listener.LocalEndpoint).Port
+    Write-Host ('Local port: ' + $Port)
     if (-not $NoTunnel) {
         if ($env:PROCESSOR_ARCHITECTURE -ne 'AMD64' -and $env:PROCESSOR_ARCHITEW6432 -ne 'AMD64') {
             throw 'This package targets Windows x64. Use x64 Windows PowerShell.'
