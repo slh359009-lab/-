@@ -86,7 +86,7 @@ function Handle-Request($Stream) {
         }
     }
     if (-not $ended) { Send-Json $Stream 400 @{error='Header too large'}; return }
-    $lines = [Text.Encoding]::ASCII.GetString($headerBytes.ToArray()).Split(@("`r`n"), [StringSplitOptions]::None)
+    $lines = [Text.Encoding]::ASCII.GetString($headerBytes.ToArray()) -split "`r`n"
     if ($lines[0] -notmatch '^(GET|POST) (/[^ ]*) HTTP/1\.[01]$') {
         Send-Json $Stream 400 @{error='Unsupported HTTP request'}; return
     }
@@ -94,11 +94,11 @@ function Handle-Request($Stream) {
     $headers = @{}
     foreach ($line in $lines[1..($lines.Length-1)]) {
         if (-not $line) { continue }
-        $pair = $line.Split(@(':'), 2)
-        if ($pair.Length -ne 2) { Send-Json $Stream 400 @{error='Malformed header'}; return }
-        $name = $pair[0].Trim().ToLowerInvariant()
+        $separator = $line.IndexOf(':')
+        if ($separator -le 0) { Send-Json $Stream 400 @{error='Malformed header'}; return }
+        $name = $line.Substring(0, $separator).Trim().ToLowerInvariant()
         if ($headers.ContainsKey($name)) { Send-Json $Stream 400 @{error='Duplicate header'}; return }
-        $headers[$name] = $pair[1].Trim()
+        $headers[$name] = $line.Substring($separator + 1).Trim()
     }
     if (-not (Test-Token $headers['authorization'])) {
         Send-Json $Stream 401 @{error='Authentication required'}; return
